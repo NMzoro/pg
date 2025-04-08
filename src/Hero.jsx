@@ -102,7 +102,7 @@ const Hero = () => {
           </div>
         </div>
       </div>
-      
+      <br/>
       {/* Footer avec auteur */}
       <div className="absolute bottom-0 left-0 w-full bg-green-800/90 text-white py-4 z-10">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center">

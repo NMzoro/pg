@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { Code, Terminal, FileText, Play, Settings, User, Menu, X, ChevronDown, Maximize2, GitBranch, BarChart, Info, AlertCircle } from 'lucide-react';
+import { Code, Terminal, FileText, Play, Settings, User, Menu, X, ChevronDown, Maximize2, GitBranch, BarChart, Info, AlertCircle, Minimize } from 'lucide-react';
 
 // Toast Component personnalisé (comme React-Toastify)
 const Toast = ({ message, type, onClose }) => {
@@ -141,6 +141,25 @@ print("\\n Arbre final trouvé :", best_tree)`);
   const [costHistory, setCostHistory] = useState([]);
   const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [fileExplorerVisible, setFileExplorerVisible] = useState(true);
+  const [terminalHeight, setTerminalHeight] = useState(300); // Height in pixels
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Détecter si l'écran est de taille mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth < 768) {
+        setSidebarCollapsed(true);
+        setFileExplorerVisible(false);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     // Afficher le toast au chargement du composant
@@ -246,6 +265,7 @@ print("\\n Arbre final trouvé :", best_tree)`);
       'Chargement des dépendances...'
     ]);
     setOutputTab('terminal');
+    setTerminalVisible(true); // S'assurer que le terminal est visible
     
     // Afficher un toast d'information
     setToast({
@@ -255,13 +275,21 @@ print("\\n Arbre final trouvé :", best_tree)`);
     });
   };
 
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
+  const toggleFileExplorer = () => {
+    setFileExplorerVisible(!fileExplorerVisible);
+  };
+
   // Modal de bienvenue
   const WelcomeModal = () => {
     if (!showWelcomeModal) return null;
     
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6 border border-gray-700">
+        <div className="bg-gray-800 rounded-lg shadow-lg w-full max-w-md mx-4 p-4 sm:p-6 border border-gray-700">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-white flex items-center">
               <Info className="w-5 h-5 mr-2 text-blue-400" />
@@ -310,17 +338,23 @@ print("\\n Arbre final trouvé :", best_tree)`);
       {/* Barre de titre */}
       <div className="flex items-center justify-between bg-gray-900 p-1 border-b border-gray-700">
         <div className="flex items-center">
-          <Menu className="w-4 h-4 mx-2" />
-          <div className="text-xs mr-4">Fichier</div>
-          <div className="text-xs mr-4">Édition</div>
-          <div className="text-xs mr-4">Sélection</div>
-          <div className="text-xs mr-4">Affichage</div>
-          <div className="text-xs mr-4">Aller</div>
-          <div className="text-xs mr-4">Exécuter</div>
+          <button onClick={toggleSidebar} className="p-1">
+            <Menu className="w-4 h-4 mx-1" />
+          </button>
+          {!isMobile && (
+            <>
+              <div className="text-xs mr-4 hidden sm:block">Fichier</div>
+              <div className="text-xs mr-4 hidden sm:block">Édition</div>
+              <div className="text-xs mr-4 hidden md:block">Sélection</div>
+              <div className="text-xs mr-4 hidden md:block">Affichage</div>
+              <div className="text-xs mr-4 hidden lg:block">Aller</div>
+              <div className="text-xs mr-4">Exécuter</div>
+            </>
+          )}
         </div>
-        <div className="text-xs text-gray-400">main.py - Python - VS Code</div>
+        <div className="text-xs text-gray-400 truncate">main.py - Python - VS Code</div>
         <div className="flex">
-          <Maximize2 className="w-4 h-4 mx-1" />
+          <Maximize2 className="w-4 h-4 mx-1 hidden sm:block" />
           <X className="w-4 h-4 mx-1" />
         </div>
       </div>
@@ -328,51 +362,58 @@ print("\\n Arbre final trouvé :", best_tree)`);
       {/* Zone principale */}
       <div className="flex flex-1 overflow-hidden">
         {/* Barre latérale */}
-        <div className="flex">
-          <div className="w-12 bg-gray-900 border-r border-gray-700 flex flex-col items-center py-2">
-            <div className="py-2 border-l-2 border-blue-500">
-              <FileText className="w-6 h-6" />
+        {!sidebarCollapsed && (
+          <div className="flex">
+            <div className="w-12 bg-gray-900 border-r border-gray-700 flex flex-col items-center py-2">
+              <button 
+                onClick={() => { setFileExplorerVisible(!fileExplorerVisible); }} 
+                className={`py-2 ${fileExplorerVisible ? 'border-l-2 border-blue-500' : ''}`}
+              >
+                <FileText className="w-6 h-6" />
+              </button>
+              <div className="py-2">
+                <GitBranch className="w-6 h-6" />
+              </div>
+              <div className="py-2">
+                <Play className="w-6 h-6" />
+              </div>
+              <div className="py-2">
+                <BarChart className="w-6 h-6" />
+              </div>
+              <div className="mt-auto py-2">
+                <User className="w-6 h-6" />
+              </div>
+              <div className="py-2">
+                <Settings className="w-6 h-6" />
+              </div>
             </div>
-            <div className="py-2">
-              <GitBranch className="w-6 h-6" />
-            </div>
-            <div className="py-2">
-              <Play className="w-6 h-6" />
-            </div>
-            <div className="py-2">
-              <BarChart className="w-6 h-6" />
-            </div>
-            <div className="mt-auto py-2">
-              <User className="w-6 h-6" />
-            </div>
-            <div className="py-2">
-              <Settings className="w-6 h-6" />
-            </div>
+            
+            {/* Structure des fichiers */}
+            {fileExplorerVisible && (
+              <div className="w-48 bg-gray-800 border-r border-gray-700 overflow-y-auto hidden sm:block">
+                <div className="p-2 text-xs uppercase font-bold">Explorateur</div>
+                <div className="px-2 py-1 flex items-center">
+                  <ChevronDown className="w-4 h-4 mr-1" />
+                  <span className="text-xs">PROJET PYTHON</span>
+                </div>
+                <div className="pl-4">
+                  <div className="px-2 py-1 text-xs bg-gray-700 rounded flex items-center">
+                    <FileText className="w-3 h-3 mr-2 text-blue-400" />
+                    main.py
+                  </div>
+                  <div className="px-2 py-1 text-xs flex items-center">
+                    <FileText className="w-3 h-3 mr-2 text-yellow-400" />
+                    requirements.txt
+                  </div>
+                  <div className="px-2 py-1 text-xs flex items-center">
+                    <FileText className="w-3 h-3 mr-2 text-green-400" />
+                    README.md
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-          
-          {/* Structure des fichiers */}
-          <div className="w-48 bg-gray-800 border-r border-gray-700 overflow-y-auto">
-            <div className="p-2 text-xs uppercase font-bold">Explorateur</div>
-            <div className="px-2 py-1 flex items-center">
-              <ChevronDown className="w-4 h-4 mr-1" />
-              <span className="text-xs">PROJET PYTHON</span>
-            </div>
-            <div className="pl-4">
-              <div className="px-2 py-1 text-xs bg-gray-700 rounded flex items-center">
-                <FileText className="w-3 h-3 mr-2 text-blue-400" />
-                main.py
-              </div>
-              <div className="px-2 py-1 text-xs flex items-center">
-                <FileText className="w-3 h-3 mr-2 text-yellow-400" />
-                requirements.txt
-              </div>
-              <div className="px-2 py-1 text-xs flex items-center">
-                <FileText className="w-3 h-3 mr-2 text-green-400" />
-                README.md
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Zone d'édition et de sortie */}
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -387,7 +428,7 @@ print("\\n Arbre final trouvé :", best_tree)`);
 
           {/* Éditeur de code */}
           <div className="flex-1 overflow-auto bg-gray-900 relative">
-            <div className="absolute top-2 right-2">
+            <div className="absolute top-2 right-2 z-10">
               <button 
                 onClick={handleRunCode} 
                 disabled={isExecuting}
@@ -397,15 +438,18 @@ print("\\n Arbre final trouvé :", best_tree)`);
                 {isExecuting ? 'Exécution...' : 'Exécuter'}
               </button>
             </div>
-            <div className="font-mono text-sm p-4 whitespace-pre">
+            <div className="font-mono text-xs sm:text-sm p-2 sm:p-4 whitespace-pre overflow-auto">
               <pre className="text-gray-300">{code}</pre>
             </div>
           </div>
 
-          {/* Terminal et résultats */}
+          {/* Terminal et résultats - avec séparateur ajustable */}
           {terminalVisible && (
-            <div className="h-80 bg-gray-900 border-t border-gray-700 overflow-hidden flex flex-col">
-              <div className="flex bg-gray-800 border-b border-gray-700">
+            <div 
+              className="bg-gray-900 border-t border-gray-700 overflow-hidden flex flex-col"
+              style={{ height: isMobile ? '40vh' : `${terminalHeight}px` }}
+            >
+              <div className="flex bg-gray-800 border-b border-gray-700 items-center">
                 <div 
                   className={`px-3 py-1 text-xs flex items-center border-r border-gray-700 cursor-pointer ${outputTab === 'terminal' ? 'bg-gray-700' : 'bg-gray-800'}`}
                   onClick={() => setOutputTab('terminal')}
@@ -415,13 +459,21 @@ print("\\n Arbre final trouvé :", best_tree)`);
                 </div>
                 <div 
                   className={`px-3 py-1 text-xs flex items-center border-r border-gray-700 cursor-pointer ${outputTab === 'graphs' ? 'bg-gray-700' : 'bg-gray-800'}`}
-                  onClick={() => outputTab === 'graphs' ? setOutputTab('terminal') : null}
+                  onClick={() => graphVisible ? setOutputTab('graphs') : null}
                 >
                   <BarChart className="w-3 h-3 mr-2" />
                   Graphiques
                 </div>
+                {!isMobile && (
+                  <div 
+                    className="ml-2 cursor-pointer hover:bg-gray-700 rounded px-1"
+                    onClick={() => setTerminalHeight(terminalHeight === 300 ? 150 : 300)}
+                  >
+                    {terminalHeight === 300 ? <Minimize className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+                  </div>
+                )}
                 <div className="ml-auto px-1 py-1 flex items-center">
-                  <X className="w-3 h-3" onClick={() => setTerminalVisible(false)} />
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setTerminalVisible(false)} />
                 </div>
               </div>
               
@@ -443,51 +495,55 @@ print("\\n Arbre final trouvé :", best_tree)`);
                     </div>
                     
                     <div className="flex flex-wrap">
-                      <div className="w-1/2 p-2 bg-white rounded">
-                        <div className="text-xs font-bold text-gray-800 mb-1">Fonction vs Approximation</div>
-                        <ResponsiveContainer width="100%" height={200}>
-                          <ScatterChart margin={{ top: 5, right: 5, bottom: 20, left: 20 }}>
-                            <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
-                            <XAxis type="number" dataKey="x" name="X" />
-                            <YAxis type="number" dataKey="y" name="Y" />
-                            <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                            <Legend />
-                            <Scatter name="Vraie fonction" data={graphData} fill="#8884d8" />
-                            <Line
-                              type="monotone"
-                              dataKey="predicted"
-                              stroke="#ff7300"
-                              name="Approximation GP"
-                              dot={false}
-                              data={graphData}
-                            />
-                          </ScatterChart>
-                        </ResponsiveContainer>
+                      <div className="w-full md:w-1/2 p-2">
+                        <div className="bg-white rounded p-2">
+                          <div className="text-xs font-bold text-gray-800 mb-1">Fonction vs Approximation</div>
+                          <ResponsiveContainer width="100%" height={isMobile ? 150 : 200}>
+                            <ScatterChart margin={{ top: 5, right: 5, bottom: 20, left: 20 }}>
+                              <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
+                              <XAxis type="number" dataKey="x" name="X" />
+                              <YAxis type="number" dataKey="y" name="Y" />
+                              <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                              <Legend />
+                              <Scatter name="Vraie fonction" data={graphData} fill="#8884d8" />
+                              <Line
+                                type="monotone"
+                                dataKey="predicted"
+                                stroke="#ff7300"
+                                name="Approximation GP"
+                                dot={false}
+                                data={graphData}
+                              />
+                            </ScatterChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
                       
-                      <div className="w-1/2 p-2 bg-white rounded">
-                        <div className="text-xs font-bold text-gray-800 mb-1">Évolution de la fitness</div>
-                        <ResponsiveContainer width="100%" height={200}>
-                          <LineChart data={costHistory} margin={{ top: 5, right: 5, bottom: 20, left: 20 }}>
-                            <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
-                            <XAxis type="number" dataKey="iteration" name="Génération" />
-                            <YAxis type="number" name="Fitness" />
-                            <Tooltip />
-                            <Legend />
-                            <Line
-                              type="monotone"
-                              dataKey="cost"
-                              stroke="#ff0000"
-                              name="Erreur quadratique moyenne"
-                              dot={false}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
+                      <div className="w-full md:w-1/2 p-2">
+                        <div className="bg-white rounded p-2">
+                          <div className="text-xs font-bold text-gray-800 mb-1">Évolution de la fitness</div>
+                          <ResponsiveContainer width="100%" height={isMobile ? 150 : 200}>
+                            <LineChart data={costHistory} margin={{ top: 5, right: 5, bottom: 20, left: 20 }}>
+                              <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
+                              <XAxis type="number" dataKey="iteration" name="Génération" />
+                              <YAxis type="number" name="Fitness" />
+                              <Tooltip />
+                              <Legend />
+                              <Line
+                                type="monotone"
+                                dataKey="cost"
+                                stroke="#ff0000"
+                                name="Erreur quadratique moyenne"
+                                dot={false}
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
                       
                       <div className="w-full p-3 mt-2 bg-gray-800 rounded text-xs">
                         <div className="font-bold mb-1">Résultats de la programmation génétique:</div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <div>Fitness finale: <span className="text-green-400">1.0000</span></div>
                             <div>Générations: <span className="text-green-400">30</span></div>
@@ -495,7 +551,7 @@ print("\\n Arbre final trouvé :", best_tree)`);
                           </div>
                           <div>
                             <div>Expression trouvée: <span className="text-blue-400">x² + 2x + 1</span></div>
-                            <div>Arbre: <span className="text-blue-400">['add', ['add', ['add', 'x', 0], ['mul', 'x', 'x']], 'x']</span></div>
+                            <div className="truncate">Arbre: <span className="text-blue-400">['add', ['add', ['add', 'x', 0], ['mul', 'x', 'x']], 'x']</span></div>
                             <div>Précision: <span className="text-green-400">99.0%</span></div>
                           </div>
                         </div>
@@ -518,11 +574,11 @@ print("\\n Arbre final trouvé :", best_tree)`);
               {isExecuting ? 'Exécution...' : 'Exécuter'}
             </button>
           </div>
-          <div>Python 3.9.0</div>
+          <div className="hidden xs:block">Python 3.9.0</div>
         </div>
         <div className="flex items-center">
-          <div className="mx-4">UTF-8</div>
-          <div className="mx-4">LF</div>
+          <div className="mx-2 sm:mx-4 hidden xs:block">UTF-8</div>
+          <div className="mx-2 sm:mx-4 hidden sm:block">LF</div>
           <div>Ligne 1, Col 1</div>
         </div>
       </div>
